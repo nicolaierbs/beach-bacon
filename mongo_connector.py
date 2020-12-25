@@ -20,3 +20,7 @@ def ingest_player(player):
 
     for result in player['results']:
         db.team.update_one({'dvv_id': result['team_id']}, {'$addToSet': {'player': player['dvv_id']}}, True)
+
+
+def retrieve_teams():
+    return db.team.find({}, {'player': 1})
