@@ -15,13 +15,8 @@ client = pymongo.MongoClient("mongodb://" + server_name + ":27017/")
 db = client[database_name]
 
 
-def store_player(player):
-    db.player.insert_one(player)
+def ingest_player(player):
+    db.player.replace_one({'dvv_id': player['dvv_id']}, player, True)
 
-
-def store_team(team):
-    db.team.insert_one(team)
-
-
-def store_tournament(tournament):
-    db.tournament.insert_one(tournament)
+    for result in player['results']:
+        db.team.update_one({'dvv_id': result['team_id']}, {'$addToSet': {'player': player['dvv_id']}}, True)
