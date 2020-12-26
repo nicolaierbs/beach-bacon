@@ -70,4 +70,4 @@ def crawl(min_id, max_id):
             print(str(i) + ': ' + str(e))
 
 
-crawl(50200, 62650)
+crawl(59525, 62650)
