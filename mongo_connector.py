@@ -24,3 +24,8 @@ def ingest_player(player):
 
 def retrieve_teams():
     return db.team.find({}, {'player': 1})
+
+
+def player_name(dvv_id):
+    player = db.player.find_one({'dvv_id': dvv_id}, {'first_name': 1, 'last_name': 1})
+    return player['first_name'] + ' ' + player['last_name']
