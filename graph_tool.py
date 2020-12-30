@@ -4,6 +4,10 @@ from dijkstar.algorithm import NoPathError
 import mongo_connector
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
+
+file_name = 'paths.pkl'
+graph_name = 'mixed_graph.graph'
 
 
 def compute_connectors(graph):
@@ -11,7 +15,7 @@ def compute_connectors(graph):
 
     column_names = ['player', 'longest_path', 'mean_path', 'count_nan', 'player_count']
     df = pd.DataFrame(columns=column_names)
-    for node_one in nodes:
+    for node_one in tqdm(nodes):
         paths = np.empty([0], dtype=int)
         for node_two in nodes:
             try:
@@ -24,23 +28,25 @@ def compute_connectors(graph):
                         'mean_path': np.nanmean(paths),
                         'count_nan': np.count_nonzero(np.isnan(paths)),
                         'player_count': len(paths)}, ignore_index=True)
+        df.to_pickle(file_name)
 
     return df
 
 
 def build_graph():
     graph = Graph(undirected=True)
-    for team in mongo_connector.retrieve_teams():
+    for team in mongo_connector.retrieve_teams(men=False, women=False, mixed=True):
         if len(team['player']) == 2:
             graph.add_edge(team['player'][0], team['player'][1], 1)
+    print('Built graph with ' + str(len(graph.get_data().keys())) + ' nodes')
     return graph
 
 
 team_graph = build_graph()
-team_graph.dump('full.graph')
+team_graph.dump(graph_name)
 print('exported graph')
-team_graph = Graph.load('full.graph')
+team_graph = Graph.load(graph_name)
 
-paths = compute_connectors(team_graph)
-paths.to_pickle('shortest_paths.pkl')
-print(paths.describe())
+shortest_paths = compute_connectors(team_graph)
+shortest_paths.to_pickle(file_name)
+print(shortest_paths.describe())
