@@ -20,6 +20,8 @@ player_result_pattern = re.compile(r'<tr><td rowspan=1 valign=top>(\d{2}.\d{2}.\
                                    r'<td>([^<]*)</tD></tr>)?'  # Point type
                                    )
 
+tornament_gender_pattern = re.compile(r'<td class="bez" valign="top">Geschlecht:</td><td valign=top>([^<]*)</td>')
+
 
 def get_player_results(source):
     results = list()
@@ -41,6 +43,17 @@ def get_player_results(source):
     return results
 
 
+def get_tournament(web_id):
+    url = 'https://beach.volleyball-verband.de/public/tur-show.php?id=' + str(web_id)
+    source = requests.get(url).text
+
+    tournament_details = dict()
+    tournament_details['dvv_id'] = web_id
+    tournament_details['gender'] = tornament_gender_pattern.search(source).group(1)
+
+    return tournament_details
+
+
 def get_player(web_id):
     url = 'https://beach.volleyball-verband.de/public/spieler.php?id=' + str(web_id)
     source = requests.get(url).text
@@ -56,18 +69,27 @@ def get_player(web_id):
     return player_details
 
 
-def ingest(player_details):
-    mongo_connector.ingest_player(player_details)
-
-
-def crawl(min_id, max_id):
+def crawl_player(min_id, max_id):
     for i in range(min_id, max_id):
 
         try:
             player = get_player(i)
-            ingest(player)
+            mongo_connector.ingest_player(player)
         except ValueError as e:
             print(str(i) + ': ' + str(e))
 
 
-crawl(59525, 62650)
+def crawl_tournaments(min_id, max_id):
+    for i in range(min_id, max_id):
+
+        try:
+            tournament = get_tournament(i)
+            mongo_connector.ingest_tournament(tournament)
+        except ValueError as e:
+            print(str(i) + ': ' + str(e))
+        except AttributeError as e:
+            print(str(i) + ': ' + str(e))
+
+
+# crawl_player(59525, 62650)
+crawl_tournaments(5073, 5076)
